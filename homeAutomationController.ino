@@ -1,3 +1,4 @@
+#include <ESP8266WiFi.h>
 #include <EEPROM.h>
 
 #define D0 16
@@ -17,14 +18,45 @@
 
 #define eepromLocation 0
 
+
+// WiFi parameters
+const char* ssid = "Haha";
+const char* password = "12345678";
+
+// The port to listen for incoming TCP connections
+#define LISTEN_PORT           80
+
+// Create an instance of the server
+WiFiServer server(LISTEN_PORT);
+
+
 void setup(void) {
 
   pinMode(buttonPin, INPUT);
   pinMode(D5,OUTPUT);
   pinMode(D6,OUTPUT);
   
+  Serial.begin(115200);
+  
   EEPROM.begin(10);
   restoreState();
+
+  // Connect to WiFi
+  WiFi.begin(ssid, password);
+  while (WiFi.status() != WL_CONNECTED) {
+    delay(500);
+    Serial.print(".");
+  }
+  Serial.println("");
+  Serial.println("WiFi connected");
+
+  // Start the server
+  server.begin();
+  Serial.println("Server started");
+
+  // Print the IP address
+  Serial.println(WiFi.localIP());
+  
 }
 
 void loop() {
