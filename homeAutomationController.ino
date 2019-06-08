@@ -1,5 +1,7 @@
 #include <ESP8266WiFi.h>
 #include <EEPROM.h>
+#include <aREST.h>
+#include <aREST_UI.h>
 
 #define D0 16
 #define D1 5
@@ -29,17 +31,35 @@ const char* password = "12345678";
 // Create an instance of the server
 WiFiServer server(LISTEN_PORT);
 
+// Create aREST instance
+aREST_UI rest = aREST_UI();
+
 
 void setup(void) {
 
   pinMode(buttonPin, INPUT);
-  pinMode(D5,OUTPUT);
-  pinMode(D6,OUTPUT);
+  pinMode(buttonPin2, INPUT);
+
   
   Serial.begin(115200);
   
+  
+  rest.title("aREST UI Demo");
+
+  // Create button to control pin 5
+  rest.button(5,"Fan");
+  rest.button(6,"Light");
+
+  // Give name and ID to device
+  rest.set_id("1");
+  rest.set_name("esp8266");
+ 
+  
   EEPROM.begin(10);
   restoreState();
+
+
+
 
   // Connect to WiFi
   WiFi.begin(ssid, password);
@@ -73,6 +93,18 @@ if (digitalRead(buttonPin2) == HIGH){
     saveState();
   }
 
+// Handle REST calls
+  WiFiClient client = server.available();
+  if (!client) {
+    return;
+  }
+  while (!client.available()) {
+    delay(1); 
+  }
+  rest.handle(client);
+  saveState();
+
+
 }
 // Save the state of the lights using bitWrite()
 void saveState(){
@@ -81,11 +113,11 @@ void saveState(){
    bitWrite(lights, 0, digitalRead(D5));
    bitWrite(lights, 1, digitalRead(D6));
    
-//Serial.println("Storing state to EEPROM");
-//Serial.println(lights);
-EEPROM.write(eepromLocation, lights);
-EEPROM.commit();
-  }
+  //Serial.println("Storing state to EEPROM");
+  //Serial.println(lights);
+  EEPROM.write(eepromLocation, lights);
+  EEPROM.commit();
+}
 
 // restore the lights using bitRead() 
 void restoreState(){
