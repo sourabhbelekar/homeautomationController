@@ -2,6 +2,11 @@
 #include <EEPROM.h>
 #include <aREST.h>
 #include <aREST_UI.h>
+#include <Ticker.h>
+#include <ESP8266HTTPClient.h>
+
+Ticker heartbeat;
+int ticker=0;
 
 #define D0 16
 #define D1 5
@@ -20,10 +25,13 @@
 
 #define eepromLocation 0
 
+#define deviceName "automate"
+#define registerDeviceURL "http://raspberrypi/register"
 
 // WiFi parameters
 const char* ssid = "Haha";
 const char* password = "12345678";
+
 
 // The port to listen for incoming TCP connections
 #define LISTEN_PORT           80
@@ -76,10 +84,41 @@ void setup(void) {
 
   // Print the IP address
   Serial.println(WiFi.localIP());
-  
+  heartbeat.attach(1.0, updateStatusCounter);
 }
 
 void loop() {
+
+
+if(ticker>10){
+  
+        String postData="";
+      
+      IPAddress ip = WiFi.localIP();
+      postData.concat("{\"name\" :\"");
+      postData.concat(deviceName);
+      postData.concat("\",\"ipaddr\" : \"");
+      postData.concat(ip.toString());
+      postData.concat("\"}");
+    
+    if(WiFi.status()== WL_CONNECTED){
+       HTTPClient http;    
+     
+       http.begin(registerDeviceURL);      
+       http.addHeader("Content-Type", "application/json");  
+     
+       int httpCode = http.POST(postData);   
+       String payload = http.getString();    
+    
+       
+       Serial.println(postData);
+       Serial.println(httpCode);   
+       Serial.println(payload);    
+     
+      http.end();  
+      ticker=0;
+    }
+  }
 
 if(digitalRead(buttonPin) == HIGH )
     {
@@ -128,3 +167,7 @@ void restoreState(){
   // Serial.println("Reading state from EEPROM");
   // Serial.println(lights);
 }
+void updateStatusCounter(){
+
+ticker = ticker+1;
+  }
