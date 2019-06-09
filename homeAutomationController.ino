@@ -6,8 +6,9 @@
 #include <ESP8266HTTPClient.h>
 
 Ticker heartbeat;
-int ticker=0;
 
+int refreshTime=10;
+int ticker=0;
 #define D0 16
 #define D1 5
 #define D2 4
@@ -25,7 +26,7 @@ int ticker=0;
 
 #define eepromLocation 0
 
-#define deviceName "automate"
+#define deviceName "Classroom 205"
 #define registerDeviceURL "http://raspberrypi/register"
 
 // WiFi parameters
@@ -52,7 +53,7 @@ void setup(void) {
   Serial.begin(115200);
   
   
-  rest.title("aREST UI Demo");
+  rest.title("Class 205 Controller");
 
   // Create button to control pin 5
   rest.button(5,"Fan");
@@ -90,7 +91,7 @@ void setup(void) {
 void loop() {
 
 
-if(ticker>10){
+if(ticker<=0){
   
         String postData="";
       
@@ -116,7 +117,7 @@ if(ticker>10){
        Serial.println(payload);    
      
       http.end();  
-      ticker=0;
+      ticker=refreshTime;
     }
   }
 
@@ -169,5 +170,5 @@ void restoreState(){
 }
 void updateStatusCounter(){
 
-ticker = ticker+1;
+ticker = ticker-1;
   }
